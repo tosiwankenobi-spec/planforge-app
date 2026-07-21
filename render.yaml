@@ -3,9 +3,26 @@
 # Render provisions the Postgres database and wires DATABASE_URL automatically.
 # You still need to fill in (in the Render dashboard, under this service's Environment):
 #   ENCRYPTION_KEY   → run `openssl rand -hex 32` locally, paste the result
-#   ALLOWED_ORIGINS  → your hosted app's origin(s), comma-separated
+#   ALLOWED_ORIGINS  → for the Android + Electron desktop apps in this repo, use exactly:
+#                        http://localhost,null
+#                      (http://localhost is the Capacitor Android WebView's origin;
+#                      "null" is what Electron's file:// pages send as Origin. Add your
+#                      hosted PWA's own origin too, comma-separated, if you deploy one.)
 #   SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / MAIL_FROM → your email provider
+#                      (optional — leave SMTP_HOST blank and password reset falls back
+#                      to the offline recovery code, nothing else breaks)
 # JWT_SECRET is generated for you automatically.
+#
+# After deploying: Render assigns this service the URL https://planforge-server.onrender.com
+# (unless that name is taken, in which case it appends a random suffix — check the
+# dashboard). That URL is already baked into app/src/config.js as PROD_API_BASE; if Render
+# gave you a different URL, update that one line and rebuild both apps
+# (`npm run build && npx cap copy android` + `npm run electron:build`).
+#
+# Also copy server/keys/public.pem's contents into this service's disk or re-derive it —
+# license activation (POST /api/orgs/activate) fails without server/keys/public.pem present
+# at deploy time. Since Render builds from this repo, committing server/keys/public.pem
+# (already tracked, not a secret — it can only verify keys, not mint them) is sufficient.
 
 databases:
   - name: planforge-db

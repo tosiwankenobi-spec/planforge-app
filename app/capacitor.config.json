@@ -2,5 +2,8 @@
   "appId": "com.planforgeapp.planner",
   "appName": "PlanForge",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "http"
+  }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Plus, Trash2, X, ChevronLeft, ChevronRight, Clock, CheckCircle2, Circle, Loader2, CalendarDays, LayoutList, GripVertical, Eye, EyeOff, Repeat, AlertTriangle, Users, LogOut, Menu, Settings, KeyRound } from 'lucide-react';
+import { Sparkles, Plus, Trash2, X, ChevronLeft, ChevronRight, Clock, CheckCircle2, Circle, Loader2, CalendarDays, LayoutList, GripVertical, Eye, EyeOff, Repeat, AlertTriangle, Users, LogOut, Menu, Settings, KeyRound, Download } from 'lucide-react';
 import { api, saveToken, clearToken, hasToken } from './api';
 
 const THEME = {
@@ -285,8 +285,6 @@ Every task id must appear exactly once in blocks.`;
         .icon-btn:hover { background: ${THEME.paperDeep}; }
         .task-card { transition: box-shadow 0.15s ease, border-color 0.15s ease; }
         .task-card:hover { border-color: ${THEME.ink} !important; box-shadow: 2px 2px 0 ${THEME.rule}; }
-        .task-card .del-btn { opacity: 0; transition: opacity 0.15s ease; }
-        .task-card:hover .del-btn { opacity: 1; }
         .nav-pill { transition: background 0.15s ease, color 0.15s ease; }
         .day-cell { transition: background 0.15s ease, border-color 0.15s ease; cursor: pointer; }
         .day-cell:hover { border-color: ${THEME.pine} !important; }
@@ -944,6 +942,48 @@ function LoginScreen({ onLoggedIn, onSwitchToSetup, onForgotPassword }) {
   );
 }
 
+function useInstallPrompt() {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [installed, setInstalled] = useState(false);
+
+  useEffect(() => {
+    setInstalled(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
+
+    function onBeforeInstallPrompt(e) { e.preventDefault(); setDeferredPrompt(e); }
+    function onAppInstalled() { setInstalled(true); setDeferredPrompt(null); }
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('appinstalled', onAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', onAppInstalled);
+    };
+  }, []);
+
+  async function promptInstall() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+  }
+
+  return { canInstall: !!deferredPrompt && !installed, promptInstall };
+}
+
+function InstallButton() {
+  const { canInstall, promptInstall } = useInstallPrompt();
+  if (!canInstall) return null;
+  return (
+    <button onClick={promptInstall} style={{
+      position: 'fixed', top: 16, right: 16, zIndex: 100,
+      display: 'flex', alignItems: 'center', gap: 6,
+      background: THEME.pine, color: '#fff', border: 'none', borderRadius: 8,
+      padding: '9px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.18)'
+    }}><Download size={15} /> Install app</button>
+  );
+}
+
 export default function PlanForgeApp() {
   const [status, setStatus] = useState('checking'); // checking | login | setup | email-reset | recover | ready
   const [user, setUser] = useState(null);
@@ -966,11 +1006,15 @@ export default function PlanForgeApp() {
   function logout() { clearToken(); setUser(null); setStatus('login'); }
 
   if (status === 'checking') return null;
-  if (status === 'setup') return <SetupScreen onActivated={handleReady} onSwitchToLogin={() => setStatus('login')} />;
-  if (status === 'email-reset') return <EmailResetScreen onRecovered={handleReady} onSwitchToLogin={() => setStatus('login')} onUseOfflineCode={() => setStatus('recover')} />;
-  if (status === 'recover') return <RecoverScreen onRecovered={handleReady} onSwitchToLogin={() => setStatus('login')} />;
-  if (status === 'login') return <LoginScreen onLoggedIn={handleReady} onSwitchToSetup={() => setStatus('setup')} onForgotPassword={() => setStatus('email-reset')} />;
-  return <Planner user={user} onLogout={logout} />;
+
+  let content;
+  if (status === 'setup') content = <SetupScreen onActivated={handleReady} onSwitchToLogin={() => setStatus('login')} />;
+  else if (status === 'email-reset') content = <EmailResetScreen onRecovered={handleReady} onSwitchToLogin={() => setStatus('login')} onUseOfflineCode={() => setStatus('recover')} />;
+  else if (status === 'recover') content = <RecoverScreen onRecovered={handleReady} onSwitchToLogin={() => setStatus('login')} />;
+  else if (status === 'login') content = <LoginScreen onLoggedIn={handleReady} onSwitchToSetup={() => setStatus('setup')} onForgotPassword={() => setStatus('email-reset')} />;
+  else content = <Planner user={user} onLogout={logout} />;
+
+  return (<>{content}<InstallButton /></>);
 }
 
 function TeamView() {

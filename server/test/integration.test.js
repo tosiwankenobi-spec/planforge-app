@@ -11,6 +11,7 @@ import { generateKeyPairSync, sign as cryptoSign } from 'node:crypto';
 import { writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { startTestSmtp } from './test-smtp.js';
 
@@ -68,7 +69,7 @@ before(async () => {
   smtp = await startTestSmtp(SMTP_PORT);
 
   serverProcess = spawn('node', ['index.js'], {
-    cwd: new URL('..', import.meta.url).pathname,
+    cwd: fileURLToPath(new URL('..', import.meta.url)),
     env: {
       ...process.env,
       PORT: String(PORT),

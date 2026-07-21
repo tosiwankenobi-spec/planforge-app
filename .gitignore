@@ -1,0 +1,17 @@
+node_modules/
+dist/
+release/
+
+# Secrets — never commit these.
+.env
+server/keys/private.pem
+licensing/private.pem
+app/android/keystore.properties
+app/android/keystore/
+app/android/local.properties
+
+# Build outputs
+app/android/app/build/
+app/android/build/
+app/android/.gradle/
+app/android/capacitor-cordova-android-plugins/build/
