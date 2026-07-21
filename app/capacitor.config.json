@@ -1,0 +1,6 @@
+{
+  "appId": "com.planforgeapp.planner",
+  "appName": "PlanForge",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
