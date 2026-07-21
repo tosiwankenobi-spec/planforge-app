@@ -1,4 +1,4 @@
-# PlanForge — multi-tenant, license-key-gated planner
+p # PlanForge — multi-tenant, license-key-gated planner
 
 You host `server/` once. Every organization that buys a license redeems it inside that
 same server to create their own isolated org — separate users, separate tasks, separate
